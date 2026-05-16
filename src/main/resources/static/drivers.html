@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Drivers | RideX</title>
+
+    <!-- GOOGLE FONT -->
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <!-- ICONS -->
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <!-- CSS -->
+
+    <link rel="stylesheet"
+          href="css/style.css">
+
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+
+    <nav class="navbar">
+
+        <div class="logo">
+            RideX
+        </div>
+
+        <ul class="nav-links">
+
+            <li>
+                <a href="dashboard.html">
+                    Home
+                </a>
+            </li>
+
+            <li>
+                <a href="customers.html">
+                    Customers
+                </a>
+            </li>
+
+            <li>
+                <a href="drivers.html">
+                    Drivers
+                </a>
+            </li>
+
+            <li>
+                <a href="rides.html">
+                    Rides
+                </a>
+            </li>
+
+        </ul>
+
+        <button class="nav-btn"
+                onclick="openDriverModal()">
+
+            Add Driver
+
+        </button>
+
+    </nav>
+
+    <!-- PAGE HEADER -->
+
+    <section class="page-header">
+
+        <h1>
+            Driver Operations
+        </h1>
+
+        <p>
+            Manage RideX drivers and ride availability.
+        </p>
+
+    </section>
+
+    <!-- STATS -->
+
+    <section class="stats-grid">
+
+        <div class="stats-box">
+
+            <h2 id="totalDrivers">
+                0
+            </h2>
+
+            <p>
+                Total Drivers
+            </p>
+
+        </div>
+
+        <div class="stats-box">
+
+            <h2 id="availableDrivers">
+                0
+            </h2>
+
+            <p>
+                Available Drivers
+            </p>
+
+        </div>
+
+        <div class="stats-box">
+
+            <h2 id="activeDrivers">
+                0
+            </h2>
+
+            <p>
+                On Ride
+            </p>
+
+        </div>
+
+    </section>
+
+    <!-- SEARCH -->
+
+    <section class="customer-search">
+
+        <div class="search-bar">
+
+            <i class="fa-solid fa-magnifying-glass"></i>
+
+            <input type="text"
+                   id="searchInput"
+                   placeholder="Search drivers..."
+                   onkeyup="searchDrivers()">
+
+        </div>
+
+    </section>
+
+    <!-- DRIVER GRID -->
+
+    <section class="driver-grid"
+             id="driverGrid">
+
+    </section>
+
+    <!-- MODAL -->
+
+    <div class="modal-overlay"
+         id="driverModal">
+
+        <div class="customer-modal">
+
+            <div class="modal-top">
+
+                <h2>
+                    Add Driver
+                </h2>
+
+                <i class="fa-solid fa-xmark"
+                   onclick="closeDriverModal()"></i>
+
+            </div>
+
+            <div class="modal-form">
+
+                <input type="text"
+                       id="fullName"
+                       placeholder="Driver Name">
+
+                <input type="email"
+                       id="email"
+                       placeholder="Email">
+
+                <input type="text"
+                       id="phone"
+                       placeholder="Phone Number">
+
+                <input type="text"
+                       id="licenseNumber"
+                       placeholder="License Number">
+
+                <input type="text"
+                       id="vehicleModel"
+                       placeholder="Vehicle Model">
+
+                <input type="text"
+                       id="vehicleNumber"
+                       placeholder="Vehicle Number">
+
+                <button onclick="addDriver()">
+
+                    Add Driver
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- JS -->
+
+    <script>
+
+        let allDrivers = [];
+
+        // LOAD DRIVERS
+
+        async function loadDrivers(){
+
+            const response =
+                await fetch("http://localhost:8080/drivers");
+
+            const drivers =
+                await response.json();
+
+            allDrivers = drivers;
+
+            // STATS
+
+            document.getElementById("totalDrivers")
+                .innerText = drivers.length;
+
+            const available =
+                drivers.filter(driver =>
+
+                    driver.status === "AVAILABLE"
+
+                );
+
+            document.getElementById("availableDrivers")
+                .innerText = available.length;
+
+            const active =
+                drivers.filter(driver =>
+
+                    driver.status === "ON_TRIP"
+
+                );
+
+            document.getElementById("activeDrivers")
+                .innerText = active.length;
+
+            displayDrivers(drivers);
+
+        }
+
+        // DISPLAY
+
+        function displayDrivers(drivers){
+
+            const grid =
+                document.getElementById("driverGrid");
+
+            grid.innerHTML = "";
+
+            drivers.forEach(driver => {
+
+                grid.innerHTML += `
+
+                    <div class="driver-card">
+
+                        <div class="driver-top">
+
+                            <div class="driver-icon">
+
+                                <i class="fa-solid fa-user"></i>
+
+                            </div>
+
+                            <span class="driver-status">
+
+                                ${driver.status}
+
+                            </span>
+
+                        </div>
+
+                        <h3>
+                            ${driver.fullName}
+                        </h3>
+
+                        <p>
+                            ${driver.vehicleModel}
+                        </p>
+
+                        <div class="driver-details">
+
+                            <span>
+
+                                <i class="fa-solid fa-phone"></i>
+
+                                ${driver.phone}
+
+                            </span>
+
+                            <span>
+
+                                <i class="fa-solid fa-car"></i>
+
+                                ${driver.vehicleNumber}
+
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                `;
+
+            });
+
+        }
+
+        // SEARCH
+
+        function searchDrivers(){
+
+            const value =
+                document.getElementById("searchInput")
+                .value.toLowerCase();
+
+            const filtered =
+                allDrivers.filter(driver =>
+
+                    driver.fullName
+                    .toLowerCase()
+                    .includes(value)
+
+                );
+
+            displayDrivers(filtered);
+
+        }
+
+        // MODAL
+
+        function openDriverModal(){
+
+            document.getElementById("driverModal")
+                .style.display = "flex";
+
+        }
+
+        function closeDriverModal(){
+
+            document.getElementById("driverModal")
+                .style.display = "none";
+
+        }
+
+        // ADD DRIVER
+
+        async function addDriver(){
+
+            const driver = {
+
+                fullName:
+                    document.getElementById("fullName").value,
+
+                email:
+                    document.getElementById("email").value,
+
+                phone:
+                    document.getElementById("phone").value,
+
+                licenseNumber:
+                    document.getElementById("licenseNumber").value,
+
+                vehicleModel:
+                    document.getElementById("vehicleModel").value,
+
+                vehicleNumber:
+                    document.getElementById("vehicleNumber").value
+
+            };
+
+            const response =
+                await fetch(
+                    "http://localhost:8080/drivers",
+                    {
+
+                        method:"POST",
+
+                        headers:{
+                            "Content-Type":"application/json"
+                        },
+
+                        body:JSON.stringify(driver)
+
+                    }
+
+                );
+
+            if(response.ok){
+
+                closeDriverModal();
+
+                loadDrivers();
+
+            }
+
+        }
+
+        loadDrivers();
+
+    </script>
+
+</body>
+
+</html>

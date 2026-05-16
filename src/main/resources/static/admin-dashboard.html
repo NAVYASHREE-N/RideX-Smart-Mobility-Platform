@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>RideX Admin Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+rel="stylesheet">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<link rel="stylesheet"
+href="css/style.css">
+
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+
+<nav class="navbar">
+
+<div class="logo">
+RideX Admin
+</div>
+
+<ul class="nav-links">
+
+<li>
+<a href="admin-dashboard.html">
+Dashboard
+</a>
+</li>
+
+<li>
+<a href="admin-customers.html">
+Customers
+</a>
+</li>
+
+<li>
+<a href="admin-drivers.html">
+Drivers
+</a>
+</li>
+
+<li>
+<a href="admin-analytics.html">
+Analytics
+</a>
+</li>
+
+</ul>
+
+<div class="nav-actions">
+
+<button class="theme-btn"
+onclick="toggleTheme()">
+
+<i class="fa-solid fa-moon"></i>
+
+</button>
+
+<button class="nav-btn"
+onclick="logoutAdmin()">
+
+Logout
+
+</button>
+
+</div>
+
+</nav>
+
+<!-- HEADER -->
+
+<section class="page-header">
+
+<h1>
+Admin Control Center
+</h1>
+
+<p>
+Monitor rides, customers, drivers and revenue analytics.
+</p>
+
+</section>
+
+<!-- STATS -->
+
+<section class="stats-grid">
+
+<div class="stats-box admin-stat">
+
+<div class="admin-stat-top">
+
+<div>
+
+<h2 id="totalCustomers">
+0
+</h2>
+
+<p>
+Total Customers
+</p>
+
+</div>
+
+<div class="admin-stat-icon">
+
+<i class="fa-solid fa-users"></i>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="stats-box admin-stat">
+
+<div class="admin-stat-top">
+
+<div>
+
+<h2 id="totalDrivers">
+0
+</h2>
+
+<p>
+Drivers
+</p>
+
+</div>
+
+<div class="admin-stat-icon">
+
+<i class="fa-solid fa-car"></i>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="stats-box admin-stat">
+
+<div class="admin-stat-top">
+
+<div>
+
+<h2 id="totalRides">
+0
+</h2>
+
+<p>
+Rides
+</p>
+
+</div>
+
+<div class="admin-stat-icon">
+
+<i class="fa-solid fa-route"></i>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="stats-box admin-stat">
+
+<div class="admin-stat-top">
+
+<div>
+
+<h2 id="totalRevenue">
+₹0
+</h2>
+
+<p>
+Revenue
+</p>
+
+</div>
+
+<div class="admin-stat-icon">
+
+<i class="fa-solid fa-indian-rupee-sign"></i>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- RECENT RIDES -->
+
+<section class="admin-section-title">
+
+<h2>
+Recent Ride Activity
+</h2>
+
+</section>
+
+<section class="rides-grid"
+id="adminRidesGrid">
+
+</section>
+
+<script>
+
+const token =
+localStorage.getItem(
+"token"
+);
+
+if(!token){
+
+window.location.href =
+"login.html";
+
+}
+
+// LOAD DASHBOARD
+
+async function loadAdminDashboard(){
+
+const user =
+JSON.parse(
+localStorage.getItem(
+"loggedInUser"
+)
+);
+
+// PROTECTION
+
+if(
+!user
+||
+user.role !== "ADMIN"
+){
+
+window.location.href =
+"login.html";
+
+return;
+
+}
+
+// CUSTOMERS
+
+const customerResponse =
+await fetch(
+
+"http://localhost:8080/customers",
+
+{
+headers:{
+"Authorization":
+"Bearer " +
+localStorage.getItem("token")
+}
+}
+
+);
+
+const customers =
+await customerResponse.json();
+
+document.getElementById(
+"totalCustomers"
+).innerText =
+customers.filter(customer =>
+
+customer.role !== "ADMIN"
+
+).length;
+
+// DRIVERS
+
+const driverResponse =
+await fetch(
+
+"http://localhost:8080/drivers",
+
+{
+headers:{
+"Authorization":
+"Bearer " +
+localStorage.getItem("token")
+}
+}
+
+);
+
+const drivers =
+await driverResponse.json();
+
+document.getElementById(
+"totalDrivers"
+).innerText =
+drivers.length;
+
+// RIDES
+
+const rideResponse =
+await fetch(
+
+"http://localhost:8080/rides",
+
+{
+headers:{
+"Authorization":
+"Bearer " +
+localStorage.getItem("token")
+}
+}
+
+);
+
+const rides =
+await rideResponse.json();
+
+document.getElementById(
+"totalRides"
+).innerText =
+rides.length;
+
+// REVENUE
+
+let revenue = 0;
+
+rides.forEach(ride => {
+
+revenue += ride.fare;
+
+});
+
+document.getElementById(
+"totalRevenue"
+).innerText =
+"₹" + revenue;
+
+// RECENT RIDES
+
+const grid =
+document.getElementById(
+"adminRidesGrid"
+);
+
+grid.innerHTML = "";
+
+rides.reverse().forEach(ride => {
+
+grid.innerHTML += `
+
+<div class="ride-history-card">
+
+<div class="ride-top">
+
+<h3>
+
+${ride.pickupLocation}
+→
+${ride.dropLocation}
+
+</h3>
+
+<span class="ride-status">
+
+${ride.status}
+
+</span>
+
+</div>
+
+<div class="ride-details">
+
+<p>
+
+<i class="fa-solid fa-user"></i>
+
+Customer:
+${ride.customer.fullName}
+
+</p>
+
+<p>
+
+<i class="fa-solid fa-id-card"></i>
+
+Driver:
+${ride.driver
+? ride.driver.fullName
+: "Not Assigned"}
+
+</p>
+
+<p>
+
+<i class="fa-solid fa-car"></i>
+
+Vehicle:
+${ride.driver
+? ride.driver.vehicleNumber
+: "Pending"}
+
+</p>
+
+<p>
+
+<i class="fa-solid fa-indian-rupee-sign"></i>
+
+Fare:
+₹${ride.fare}
+
+</p>
+
+<p>
+
+<i class="fa-solid fa-star"></i>
+
+Rating:
+${ride.rating ?? "Not Rated"}
+
+</p>
+
+</div>
+
+</div>
+
+`;
+
+});
+
+}
+
+// LOGOUT
+
+function logoutAdmin(){
+
+localStorage.removeItem(
+"loggedInUser"
+);
+
+localStorage.removeItem(
+"token"
+);
+
+window.location.href =
+"login.html";
+
+}
+
+// LOAD
+
+loadAdminDashboard();
+
+// LOAD THEME
+
+if(
+localStorage.getItem("theme")
+=== "dark"
+){
+
+document.body.classList.add(
+"dark-mode"
+);
+
+}
+
+// TOGGLE THEME
+
+function toggleTheme(){
+
+document.body.classList.toggle(
+"dark-mode"
+);
+
+if(
+document.body.classList.contains(
+"dark-mode"
+)
+){
+
+localStorage.setItem(
+"theme",
+"dark"
+);
+
+}
+
+else{
+
+localStorage.setItem(
+"theme",
+"light"
+);
+
+}
+
+}
+
+</script>
+
+</body>
+
+</html>

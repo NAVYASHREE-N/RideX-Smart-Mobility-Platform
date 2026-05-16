@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>RideX Login</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+rel="stylesheet">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<link rel="stylesheet"
+href="css/style.css">
+
+</head>
+
+<body>
+
+<!-- LOGIN PAGE -->
+
+<section class="login-page">
+
+<!-- LEFT -->
+
+<div class="login-left">
+
+<div class="login-content">
+
+<h1>
+Welcome to RideX
+</h1>
+
+<p>
+Smart urban mobility platform for
+cab, auto and bike transportation.
+</p>
+
+<img src="images/hero-banner.jpg">
+
+</div>
+
+</div>
+
+<!-- RIGHT -->
+
+<div class="login-right">
+
+<div class="login-card">
+
+<div class="login-top">
+
+<h2>
+Login
+</h2>
+
+<p>
+Access your RideX account
+</p>
+
+</div>
+
+<!-- FORM -->
+
+<div class="login-form">
+
+<!-- EMAIL -->
+
+<div class="input-box">
+
+<i class="fa-solid fa-envelope"></i>
+
+<input type="email"
+id="email"
+placeholder="Enter Email">
+
+</div>
+
+<!-- PASSWORD -->
+
+<div class="input-box">
+
+<i class="fa-solid fa-lock"></i>
+
+<input type="password"
+id="password"
+placeholder="Enter Password">
+
+</div>
+
+<!-- BUTTON -->
+
+<button onclick="loginUser()">
+
+Login
+
+</button>
+
+<!-- SIGNUP -->
+
+<div class="signup-text">
+
+Don't have an account?
+
+<a href="signup.html">
+
+Create Account
+
+</a>
+
+</div>
+
+<!-- DRIVER LOGIN -->
+
+<div class="signup-text">
+
+Are you a driver?
+
+<a href="driver-login.html">
+
+Driver Portal
+
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<script>
+
+async function loginUser(){
+
+    const email =
+        document.getElementById(
+            "email"
+        ).value;
+
+    const password =
+        document.getElementById(
+            "password"
+        ).value;
+
+    try{
+
+        const response =
+            await fetch(
+
+                "http://localhost:8080/auth/login",
+
+                {
+
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":"application/json"
+                    },
+
+                    body:JSON.stringify({
+
+                        email,
+                        password
+
+                    })
+
+                }
+
+            );
+
+        // INVALID LOGIN
+
+        if(!response.ok){
+
+            alert(
+                "Invalid Email or Password"
+            );
+
+            return;
+
+        }
+
+        // RESPONSE
+
+        const data =
+            await response.json();
+
+        // SAVE JWT TOKEN
+
+        localStorage.setItem(
+
+            "token",
+
+            data.token
+
+        );
+
+        // SAVE USER
+
+        localStorage.setItem(
+
+            "loggedInUser",
+
+            JSON.stringify({
+
+                id:data.userId,
+
+                fullName:data.fullName,
+
+                role:data.role
+
+            })
+
+        );
+
+        // ADMIN
+
+        if(data.role === "ADMIN"){
+
+            window.location.href =
+                "admin-dashboard.html";
+
+        }
+
+        // CUSTOMER
+
+        else{
+
+            window.location.href =
+                "dashboard.html";
+
+        }
+
+    }
+
+    catch(error){
+
+        console.log(error);
+
+        alert(
+            "Server Error"
+        );
+
+    }
+
+}
+
+// LOAD THEME
+
+if(
+localStorage.getItem("theme")
+=== "dark"
+){
+
+document.body.classList.add(
+"dark-mode"
+);
+
+}
+
+// TOGGLE THEME
+
+function toggleTheme(){
+
+document.body.classList.toggle(
+"dark-mode"
+);
+
+if(
+document.body.classList.contains(
+"dark-mode"
+)
+){
+
+localStorage.setItem(
+"theme",
+"dark"
+);
+
+}
+
+else{
+
+localStorage.setItem(
+"theme",
+"light"
+);
+
+}
+
+}
+
+</script>
+
+</body>
+
+</html>

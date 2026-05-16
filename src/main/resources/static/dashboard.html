@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>RideX</title>
+
+    <!-- GOOGLE FONT -->
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <!-- ICONS -->
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <!-- CSS -->
+
+    <link rel="stylesheet"
+          href="css/style.css">
+
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+
+<nav class="navbar">
+
+<div class="logo">
+RideX
+</div>
+
+<ul class="nav-links">
+
+<li>
+<a href="dashboard.html">
+Home
+</a>
+</li>
+
+<li>
+<a href="rides.html">
+Book Ride
+</a>
+</li>
+
+<li>
+<a href="myrides.html">
+My Rides
+</a>
+</li>
+
+</ul>
+
+<div class="nav-actions">
+
+<button class="theme-btn"
+onclick="toggleTheme()">
+
+<i class="fa-solid fa-moon"></i>
+
+</button>
+
+<button class="nav-btn"
+onclick="logoutUser()">
+
+Logout
+
+</button>
+
+</div>
+
+</nav>
+
+    <!-- HERO -->
+
+    <section class="hero-section">
+
+        <div class="hero-overlay">
+
+            <div class="hero-content">
+
+                <h1>
+                    Moving people,
+                    <br>
+                    and the world
+                </h1>
+
+                <p>
+                    Smart urban mobility platform for
+                    cab, auto and bike transportation.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- SEARCH -->
+
+    <section class="search-section">
+
+        <div class="search-card">
+
+            <!-- PICKUP -->
+
+            <div class="search-input">
+
+                <i class="fa-solid fa-location-dot"></i>
+
+                <input type="text"
+                       id="pickup"
+                       placeholder="Current Location"
+                       list="pickupLocations">
+
+                <datalist id="pickupLocations">
+
+                    <option value="BTM Layout">
+                    <option value="MG Road">
+                    <option value="Koramangala">
+                    <option value="Indiranagar">
+                    <option value="Whitefield">
+                    <option value="HSR Layout">
+                    <option value="Electronic City">
+                    <option value="Marathahalli">
+                    <option value="Bellandur">
+
+                </datalist>
+
+            </div>
+
+            <!-- DESTINATION -->
+
+            <div class="search-input">
+
+                <i class="fa-solid fa-location-crosshairs"></i>
+
+                <input type="text"
+                       id="drop"
+                       placeholder="Enter Destination"
+                       list="dropLocations">
+
+                <datalist id="dropLocations">
+
+                    <option value="Airport">
+                    <option value="Majestic">
+                    <option value="HSR Layout">
+                    <option value="Electronic City">
+                    <option value="Koramangala">
+                    <option value="Whitefield">
+                    <option value="Indiranagar">
+
+                </datalist>
+
+            </div>
+
+            <!-- BUTTON -->
+
+            <button class="search-btn"
+                    onclick="searchRide()">
+
+                Search Rides
+
+                <i class="fa-solid fa-arrow-right"></i>
+
+            </button>
+
+        </div>
+
+    </section>
+
+    <!-- SERVICES -->
+
+    <section class="services-section">
+
+        <!-- CAB -->
+
+        <div class="service-card">
+
+            <img src="images/car.png">
+
+            <h3>
+                Cab Ride
+            </h3>
+
+            <p>
+                Comfortable premium city rides
+                with professional drivers.
+            </p>
+
+            <button onclick="window.location.href='rides.html'">
+
+                Book Cab
+
+            </button>
+
+        </div>
+
+        <!-- AUTO -->
+
+        <div class="service-card">
+
+            <img src="images/auto.jpg">
+
+            <h3>
+                Auto Ride
+            </h3>
+
+            <p>
+                Affordable and quick travel
+                for daily transportation.
+            </p>
+
+            <button onclick="window.location.href='rides.html'">
+
+                Book Auto
+
+            </button>
+
+        </div>
+
+        <!-- BIKE -->
+
+        <div class="service-card">
+
+            <img src="images/bike.jpg">
+
+            <h3>
+                Bike Taxi
+            </h3>
+
+            <p>
+                Beat traffic with smart
+                bike taxi services.
+            </p>
+
+            <button onclick="window.location.href='rides.html'">
+
+                Book Bike
+
+            </button>
+
+        </div>
+
+    </section>
+
+    <!-- OFFER -->
+
+    <section class="offer-section">
+
+        <div class="offer-card">
+
+            <div class="offer-left">
+
+                <h2>
+                    Introducing Smart Urban Mobility
+                </h2>
+
+                <p>
+                    Experience seamless transportation
+                    across cab, auto and bike rides.
+                </p>
+
+            </div>
+
+            <div class="offer-right">
+
+                <img src="images/mobile-app.jpg">
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- JS -->
+
+    <script>
+
+        // PAGE PROTECTION
+
+        const user =
+            JSON.parse(
+                localStorage.getItem(
+                    "loggedInUser"
+                )
+            );
+
+            const token =
+    localStorage.getItem(
+        "token"
+    );
+
+if(!token){
+
+    window.location.href =
+        "login.html";
+
+}
+
+       if(
+    !user
+){
+
+    window.location.href =
+        "login.html";
+
+}
+
+if(
+    user.role === "ADMIN"
+){
+
+    window.location.href =
+        "admin-dashboard.html";
+
+}
+        // SEARCH
+
+        function searchRide(){
+
+            const pickup =
+                document.getElementById(
+                    "pickup"
+                ).value;
+
+            const drop =
+                document.getElementById(
+                    "drop"
+                ).value;
+
+            if(
+                pickup === ""
+                ||
+                drop === ""
+            ){
+
+                alert(
+                    "Please enter locations"
+                );
+
+                return;
+
+            }
+
+            window.location.href =
+            `rides.html?pickup=${pickup}&drop=${drop}`;
+
+        }
+
+        // LOGOUT
+
+       function logoutUser(){
+
+    localStorage.removeItem(
+        "loggedInUser"
+    );
+
+    localStorage.removeItem(
+        "token"
+    );
+
+    window.location.href =
+        "login.html";
+
+}
+
+    
+
+// LOAD THEME
+
+if(
+localStorage.getItem("theme")
+=== "dark"
+){
+
+document.body.classList.add(
+"dark-mode"
+);
+
+}
+
+// TOGGLE
+
+function toggleTheme(){
+
+document.body.classList.toggle(
+"dark-mode"
+);
+
+if(
+document.body.classList.contains(
+"dark-mode"
+)
+){
+
+localStorage.setItem(
+"theme",
+"dark"
+);
+
+}
+
+else{
+
+localStorage.setItem(
+"theme",
+"light"
+);
+
+}
+
+}
+
+</script>
+
+</body>
+
+</html>

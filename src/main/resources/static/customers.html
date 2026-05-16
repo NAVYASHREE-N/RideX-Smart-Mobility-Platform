@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Customers | RideX</title>
+
+    <!-- Google Font -->
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <!-- Icons -->
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <!-- CSS -->
+
+    <link rel="stylesheet"
+          href="css/style.css">
+
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+
+    <nav class="navbar">
+
+        <div class="logo">
+            RideX
+        </div>
+
+        <ul class="nav-links">
+
+            <li>
+                <a href="dashboard.html">
+                    Home
+                </a>
+            </li>
+
+            <li>
+                <a href="customers.html">
+                    Customers
+                </a>
+            </li>
+
+            <li>
+                <a href="drivers.html">
+                    Drivers
+                </a>
+            </li>
+
+            <li>
+                <a href="rides.html">
+                    Rides
+                </a>
+            </li>
+
+        </ul>
+
+        <button class="nav-btn"
+                onclick="openModal()">
+
+            Add Customer
+
+        </button>
+
+    </nav>
+
+    <!-- HEADER -->
+
+    <section class="page-header">
+
+        <h1>
+            Customer Management
+        </h1>
+
+        <p>
+            Manage and monitor RideX customers efficiently.
+        </p>
+
+    </section>
+
+    <!-- STATS -->
+
+    <section class="stats-grid">
+
+        <div class="stats-box">
+
+            <h2 id="totalCustomers">
+                0
+            </h2>
+
+            <p>
+                Total Customers
+            </p>
+
+        </div>
+
+        <div class="stats-box">
+
+            <h2>
+                92%
+            </h2>
+
+            <p>
+                Active Users
+            </p>
+
+        </div>
+
+        <div class="stats-box">
+
+            <h2>
+                38%
+            </h2>
+
+            <p>
+                Premium Riders
+            </p>
+
+        </div>
+
+    </section>
+
+    <!-- SEARCH -->
+
+    <section class="customer-search">
+
+        <div class="search-bar">
+
+            <i class="fa-solid fa-magnifying-glass"></i>
+
+            <input type="text"
+                   id="searchInput"
+                   placeholder="Search customers..."
+                   onkeyup="searchCustomers()">
+
+        </div>
+
+    </section>
+
+    <!-- CUSTOMER CARDS -->
+
+    <section class="customer-grid"
+             id="customerGrid">
+
+    </section>
+
+    <!-- MODAL -->
+
+    <div class="modal-overlay"
+         id="modal">
+
+        <div class="customer-modal">
+
+            <div class="modal-top">
+
+                <h2>
+                    Add Customer
+                </h2>
+
+                <i class="fa-solid fa-xmark"
+                   onclick="closeModal()"></i>
+
+            </div>
+
+            <div class="modal-form">
+
+                <input type="text"
+                       id="fullName"
+                       placeholder="Full Name">
+
+                <input type="email"
+                       id="email"
+                       placeholder="Email">
+
+                <input type="text"
+                       id="phone"
+                       placeholder="Phone Number">
+
+                <input type="password"
+                       id="password"
+                       placeholder="Password">
+
+                <input type="text"
+                       id="address"
+                       placeholder="Address">
+
+                <button onclick="addCustomer()">
+                    Add Customer
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- JS -->
+
+    <script>
+
+        let allCustomers = [];
+
+        // LOAD CUSTOMERS
+
+        async function loadCustomers(){
+
+            const response =
+                await fetch("http://localhost:8080/customers");
+
+            const customers =
+                await response.json();
+
+            allCustomers = customers;
+
+            document.getElementById("totalCustomers")
+                .innerText = customers.length;
+
+            displayCustomers(customers);
+
+        }
+
+        // DISPLAY CARDS
+
+        function displayCustomers(customers){
+
+            const grid =
+                document.getElementById("customerGrid");
+
+            grid.innerHTML = "";
+
+            customers.forEach(customer => {
+
+                grid.innerHTML += `
+
+                    <div class="customer-card">
+
+                        <div class="customer-icon">
+
+                            <i class="fa-solid fa-user"></i>
+
+                        </div>
+
+                        <h3>
+                            ${customer.fullName}
+                        </h3>
+
+                        <p>
+                            ${customer.email}
+                        </p>
+
+                        <span>
+                            ${customer.phone}
+                        </span>
+
+                    </div>
+
+                `;
+
+            });
+
+        }
+
+        // SEARCH
+
+        function searchCustomers(){
+
+            const value =
+                document.getElementById("searchInput")
+                .value.toLowerCase();
+
+            const filtered =
+                allCustomers.filter(customer =>
+
+                    customer.fullName
+                    .toLowerCase()
+                    .includes(value)
+
+                );
+
+            displayCustomers(filtered);
+
+        }
+
+        // MODAL
+
+        function openModal(){
+
+            document.getElementById("modal")
+                .style.display = "flex";
+
+        }
+
+        function closeModal(){
+
+            document.getElementById("modal")
+                .style.display = "none";
+
+        }
+
+        // ADD CUSTOMER
+
+        async function addCustomer(){
+
+            const customer = {
+
+                fullName:
+                    document.getElementById("fullName").value,
+
+                email:
+                    document.getElementById("email").value,
+
+                phone:
+                    document.getElementById("phone").value,
+
+                password:
+                    document.getElementById("password").value,
+
+                address:
+                    document.getElementById("address").value
+
+            };
+
+            const response =
+                await fetch(
+                    "http://localhost:8080/customers",
+                    {
+
+                        method:"POST",
+
+                        headers:{
+                            "Content-Type":"application/json"
+                        },
+
+                        body:JSON.stringify(customer)
+
+                    }
+
+                );
+
+            if(response.ok){
+
+                closeModal();
+
+                loadCustomers();
+
+            }
+
+        }
+
+        loadCustomers();
+
+        // LOAD THEME
+
+if(
+localStorage.getItem("theme")
+=== "dark"
+){
+
+document.body.classList.add(
+"dark-mode"
+);
+
+}
+
+// TOGGLE
+
+function toggleTheme(){
+
+document.body.classList.toggle(
+"dark-mode"
+);
+
+if(
+document.body.classList.contains(
+"dark-mode"
+)
+){
+
+localStorage.setItem(
+"theme",
+"dark"
+);
+
+}
+
+else{
+
+localStorage.setItem(
+"theme",
+"light"
+);
+
+}
+
+}
+
+    </script>
+
+</body>
+
+</html>

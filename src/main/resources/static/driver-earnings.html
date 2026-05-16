@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Driver Earnings | RideX</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+rel="stylesheet">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<link rel="stylesheet"
+href="css/style.css">
+
+</head>
+
+<body>
+
+<nav class="navbar">
+
+<div class="logo">
+RideX Driver
+</div>
+
+<ul class="nav-links">
+
+<li>
+<a href="driver-dashboard.html">
+Dashboard
+</a>
+</li>
+
+<li>
+<a href="driver-trips.html">
+Trips
+</a>
+</li>
+
+<li>
+<a href="driver-earnings.html">
+Earnings
+</a>
+</li>
+
+</ul>
+
+<button class="nav-btn"
+onclick="logoutDriver()">
+
+Logout
+
+</button>
+
+</nav>
+
+<section class="page-header">
+
+<h1>
+Driver Earnings
+</h1>
+
+<p>
+Track your completed ride earnings.
+</p>
+
+</section>
+
+<section class="stats-grid">
+
+<div class="stats-box">
+
+<h2 id="totalEarnings">
+₹0
+</h2>
+
+<p>
+Total Earnings
+</p>
+
+</div>
+
+<div class="stats-box">
+
+<h2 id="completedTrips">
+0
+</h2>
+
+<p>
+Completed Trips
+</p>
+
+</div>
+
+</section>
+
+<section class="rides-grid"
+id="earningsGrid">
+
+</section>
+
+<script>
+
+const token =
+localStorage.getItem(
+"token"
+);
+
+if(!token){
+
+window.location.href =
+"login.html";
+
+}
+
+async function loadEarnings(){
+
+const driver =
+JSON.parse(
+localStorage.getItem(
+"loggedInDriver"
+)
+);
+
+if(!driver){
+
+window.location.href =
+"login.html";
+
+return;
+
+}
+
+const response =
+await fetch(
+
+"http://localhost:8080/rides",
+
+{
+headers:{
+"Authorization":
+"Bearer " +
+localStorage.getItem("token")
+}
+}
+
+);
+
+const rides =
+await response.json();
+
+const completedTrips =
+rides.filter(ride =>
+
+ride.driver
+&&
+ride.driver.id === driver.id
+&&
+ride.status === "COMPLETED"
+
+);
+
+document.getElementById(
+"completedTrips"
+).innerText =
+completedTrips.length;
+
+let total = 0;
+
+completedTrips.forEach(ride => {
+
+total += ride.fare;
+
+});
+
+document.getElementById(
+"totalEarnings"
+).innerText =
+"₹" + total;
+
+const grid =
+document.getElementById(
+"earningsGrid"
+);
+
+grid.innerHTML = "";
+
+if(completedTrips.length === 0){
+
+grid.innerHTML = `
+
+<div class="no-active-ride">
+
+<i class="fa-solid fa-wallet"></i>
+
+<h3>
+No Earnings Yet
+</h3>
+
+<p>
+Complete rides to view earnings.
+</p>
+
+</div>
+
+`;
+
+return;
+
+}
+
+completedTrips.reverse().forEach(ride => {
+
+grid.innerHTML += `
+
+<div class="ride-history-card">
+
+<div class="ride-top">
+
+<h3>
+
+${ride.pickupLocation}
+→
+${ride.dropLocation}
+
+</h3>
+
+<span class="ride-status">
+
+COMPLETED
+
+</span>
+
+</div>
+
+<div class="ride-details">
+
+<p>
+
+<i class="fa-solid fa-indian-rupee-sign"></i>
+
+Earned:
+₹${ride.fare}
+
+</p>
+
+<p>
+
+<i class="fa-solid fa-wallet"></i>
+
+Payment:
+${ride.paymentMethod ?? "Pending"}
+
+</p>
+
+<p>
+
+<i class="fa-solid fa-star"></i>
+
+Rating:
+${ride.rating ?? "Pending"}
+
+</p>
+
+</div>
+
+</div>
+
+`;
+
+});
+
+}
+
+function logoutDriver(){
+
+localStorage.removeItem(
+"loggedInDriver"
+);
+
+localStorage.removeItem(
+"token"
+);
+
+window.location.href =
+"login.html";
+
+}
+
+loadEarnings();
+
+// LOAD THEME
+
+if(
+localStorage.getItem("theme")
+=== "dark"
+){
+
+document.body.classList.add(
+"dark-mode"
+);
+
+}
+
+// TOGGLE THEME
+
+function toggleTheme(){
+
+document.body.classList.toggle(
+"dark-mode"
+);
+
+if(
+document.body.classList.contains(
+"dark-mode"
+)
+){
+
+localStorage.setItem(
+"theme",
+"dark"
+);
+
+}
+
+else{
+
+localStorage.setItem(
+"theme",
+"light"
+);
+
+}
+
+}
+
+</script>
+
+</body>
+
+</html>

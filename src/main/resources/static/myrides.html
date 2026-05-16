@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>My Rides | RideX</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+rel="stylesheet">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<link rel="stylesheet"
+href="css/style.css">
+
+</head>
+
+<body>
+
+<nav class="navbar">
+
+<div class="logo">
+RideX
+</div>
+
+<ul class="nav-links">
+
+<li>
+<a href="dashboard.html">
+Home
+</a>
+</li>
+
+<li>
+<a href="rides.html">
+Book Ride
+</a>
+</li>
+
+<li>
+<a href="myrides.html">
+My Rides
+</a>
+</li>
+
+</ul>
+
+<div class="nav-actions">
+
+<button class="theme-btn"
+onclick="toggleTheme()">
+
+<i class="fa-solid fa-moon"></i>
+
+</button>
+
+<button class="nav-btn"
+onclick="logoutUser()">
+
+Logout
+
+</button>
+
+</div>
+
+</nav>
+
+<section class="page-header">
+
+<h1>
+My Ride History
+</h1>
+
+<p>
+View all your recent and completed rides.
+</p>
+
+</section>
+
+<section class="stats-grid">
+
+<div class="stats-box">
+
+<h2 id="totalRides">
+0
+</h2>
+
+<p>
+Total Rides
+</p>
+
+</div>
+
+<div class="stats-box">
+
+<h2 id="completedRides">
+0
+</h2>
+
+<p>
+Completed Rides
+</p>
+
+</div>
+
+<div class="stats-box">
+
+<h2 id="totalSpent">
+₹0
+</h2>
+
+<p>
+Total Spent
+</p>
+
+</div>
+
+</section>
+
+<section class="rides-grid"
+id="ridesGrid">
+
+</section>
+
+<section class="tracking-section">
+
+<div class="tracking-card">
+
+<div class="tracking-top">
+
+<h2>
+Live Driver Tracking
+</h2>
+
+<span id="trackingStatus">
+
+Driver Arriving
+
+</span>
+
+</div>
+
+<div id="trackingMap"></div>
+
+</div>
+
+</section>
+
+<!-- RATING MODAL -->
+
+<div class="rating-modal-overlay"
+id="ratingModal">
+
+<div class="rating-modal">
+
+<div class="rating-animation">
+
+<i class="fa-solid fa-circle-check"></i>
+
+</div>
+
+<h2>
+Ride Completed
+</h2>
+
+<p>
+How was your trip experience?
+</p>
+
+<div class="modal-stars">
+
+<i class="fa-solid fa-star"
+onclick="submitRating(1)"></i>
+
+<i class="fa-solid fa-star"
+onclick="submitRating(2)"></i>
+
+<i class="fa-solid fa-star"
+onclick="submitRating(3)"></i>
+
+<i class="fa-solid fa-star"
+onclick="submitRating(4)"></i>
+
+<i class="fa-solid fa-star"
+onclick="submitRating(5)"></i>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- PAYMENT -->
+
+<div class="payment-modal-overlay"
+id="paymentModal">
+
+<div class="payment-modal">
+
+<div class="payment-icon">
+
+<i class="fa-solid fa-wallet"></i>
+
+</div>
+
+<h2>
+Complete Payment
+</h2>
+
+<p>
+Choose your preferred payment method
+</p>
+
+<div class="payment-options">
+
+<button onclick="makePayment('UPI')">
+
+UPI Payment
+
+</button>
+
+<button onclick="makePayment('CARD')">
+
+Card Payment
+
+</button>
+
+<button onclick="makePayment('CASH')">
+
+Cash Payment
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- RECEIPT -->
+
+<div class="receipt-overlay"
+id="receiptModal">
+
+<div class="receipt-card">
+
+<div class="receipt-top">
+
+<i class="fa-solid fa-circle-check"></i>
+
+<h2>
+Payment Successful
+</h2>
+
+</div>
+
+<div id="receiptContent">
+
+</div>
+
+<button class="done-btn"
+onclick="closeReceipt()">
+
+Done
+
+</button>
+
+</div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+
+let selectedRideId = null;
+
+// PAGE PROTECTION
+
+const user =
+JSON.parse(
+localStorage.getItem(
+"loggedInUser"
+)
+);
+
+const token =
+localStorage.getItem(
+"token"
+);
+
+if(
+!user
+||
+!token
+){
+
+window.location.href =
+"login.html";
+
+}
+
+// LOAD RIDES
+
+async function loadMyRides(){
+
+const response =
+await fetch(
+
+"http://localhost:8080/rides",
+
+{
+headers:{
+"Authorization":
+"Bearer " +
+localStorage.getItem("token")
+}
+}
+
+);
+
+const rides =
+await response.json();
+
+const myRides =
+rides.filter(ride =>
+
+ride.customer.id === user.id
+
+);
+
+// STATS
+
+document.getElementById(
+"totalRides"
+).innerText =
+myRides.length;
+
+const completed =
+myRides.filter(
+ride =>
+ride.status === "COMPLETED"
+);
+
+document.getElementById(
+"completedRides"
+).innerText =
+completed.length;
+
+let total = 0;
+
+myRides.forEach(ride => {
+
+total += ride.fare;
+
+});
+
+document.getElementById(
+"totalSpent"
+).innerText =
+"₹" + total;
+
+// GRID
+
+const ridesGrid =
+document.getElementById(
+"ridesGrid"
+);
+
+ridesGrid.innerHTML = "";
+
+myRides.reverse().forEach(ride => {
+
+ridesGrid.innerHTML += `
+
+<div class="ride-history-card">
+
+<div class="ride-top">
+
+<h3>
+
+${ride.pickupLocation}
+→
+${ride.dropLocation}
+
+</h3>
+
+<span class="ride-status">
+
+${ride.status}
+
+</span>
+
+</div>
+
+<div class="ride-details">
+
+<p>
+
+<i class="fa-solid fa-user"></i>
+
+Driver:
+${ride.driver
+? ride.driver.fullName
+: "Searching Driver..."}
+
+</p>
+
+<p>
+
+<i class="fa-solid fa-car"></i>
+
+Vehicle:
+${ride.driver
+? ride.driver.vehicleNumber
+: "Assigning Vehicle..."}
+
+</p>
+
+<p>
+
+<i class="fa-solid fa-indian-rupee-sign"></i>
+
+Fare:
+₹${ride.fare}
+
+</p>
+
+<p>
+
+<i class="fa-solid fa-key"></i>
+
+OTP:
+${ride.otp}
+
+</p>
+
+</div>
+
+${ride.status === "REQUESTED" ? `
+
+<div class="ride-action-buttons">
+
+<button class="cancel-ride-btn"
+onclick="cancelRide(${ride.id})">
+
+Cancel Ride
+
+</button>
+
+</div>
+
+` : ""}
+
+${ride.status === "ACCEPTED" ? `
+
+<p class="paid-badge">
+
+Driver Accepted Your Ride
+
+</p>
+
+` : ""}
+
+${ride.status === "IN_PROGRESS" ? `
+
+<p class="paid-badge">
+
+Ride In Progress
+
+</p>
+
+` : ""}
+
+${ride.status === "CANCELLED" ? `
+
+<p class="cancelled-badge">
+
+Ride Cancelled
+
+</p>
+
+` : ""}
+
+${ride.status === "COMPLETED" ? `
+
+<div class="rating-box">
+
+${ride.rating != null ? `
+
+<p class="rated-text">
+
+Rated:
+${ride.rating}
+⭐
+
+</p>
+
+` : `
+
+<p class="waiting-rating">
+
+Waiting for your rating...
+
+</p>
+
+`}
+
+${ride.paid ? `
+
+<p class="paid-badge">
+
+Paid via ${ride.paymentMethod}
+
+</p>
+
+` : ""}
+
+</div>
+
+` : ""}
+
+</div>
+
+`;
+
+});
+
+// RATING POPUP
+
+const pendingRide =
+myRides.find(ride =>
+
+ride.status === "COMPLETED"
+&&
+ride.rating == null
+
+);
+
+if(
+pendingRide
+&&
+!sessionStorage.getItem(
+"ratingPopupShown"
+)
+){
+
+selectedRideId =
+pendingRide.id;
+
+sessionStorage.setItem(
+"ratingPopupShown",
+"true"
+);
+
+setTimeout(() => {
+
+document.getElementById(
+"ratingModal"
+).style.display = "flex";
+
+},1000);
+
+}
+
+// TRACKING
+
+initializeTracking(myRides);
+
+}
+
+// LOGOUT
+
+function logoutUser(){
+
+localStorage.removeItem(
+"loggedInUser"
+);
+
+localStorage.removeItem(
+"token"
+);
+
+window.location.href =
+"login.html";
+
+}
+
+// CANCEL RIDE
+
+async function cancelRide(rideId){
+
+const confirmCancel =
+confirm(
+"Are you sure you want to cancel this ride?"
+);
+
+if(!confirmCancel){
+
+return;
+
+}
+
+const response =
+await fetch(
+
+`http://localhost:8080/rides/${rideId}/cancel`,
+
+{
+method:"PUT",
+
+headers:{
+"Authorization":
+"Bearer " +
+localStorage.getItem("token")
+}
+
+}
+
+);
+
+if(response.ok){
+
+alert(
+"Ride Cancelled Successfully"
+);
+
+location.reload();
+
+}
+
+}
+
+// SUBMIT RATING
+
+async function submitRating(rating){
+
+const response =
+await fetch(
+
+`http://localhost:8080/rides/${selectedRideId}/rating?rating=${rating}`,
+
+{
+method:"PUT",
+
+headers:{
+"Authorization":
+"Bearer " +
+localStorage.getItem("token")
+}
+
+}
+
+);
+
+if(response.ok){
+
+document.getElementById(
+"ratingModal"
+).style.display = "none";
+
+setTimeout(() => {
+
+document.getElementById(
+"paymentModal"
+).style.display = "flex";
+
+},700);
+
+}
+
+}
+
+// PAYMENT
+
+async function makePayment(paymentMethod){
+
+const response =
+await fetch(
+
+`http://localhost:8080/rides/${selectedRideId}/payment?paymentMethod=${paymentMethod}`,
+
+{
+method:"PUT",
+
+headers:{
+"Authorization":
+"Bearer " +
+localStorage.getItem("token")
+}
+
+}
+
+);
+
+if(response.ok){
+
+document.getElementById(
+"paymentModal"
+).style.display = "none";
+
+const rideResponse =
+await fetch(
+
+"http://localhost:8080/rides",
+
+{
+headers:{
+"Authorization":
+"Bearer " +
+localStorage.getItem("token")
+}
+}
+
+);
+
+const rides =
+await rideResponse.json();
+
+const paidRide =
+rides.find(
+ride =>
+ride.id === selectedRideId
+);
+
+document.getElementById(
+"receiptContent"
+).innerHTML = `
+
+<div class="receipt-row">
+
+<span>Ride ID</span>
+
+<strong>
+#${paidRide.id}
+</strong>
+
+</div>
+
+<div class="receipt-row">
+
+<span>Driver</span>
+
+<strong>
+${paidRide.driver
+? paidRide.driver.fullName
+: "Driver"}
+</strong>
+
+</div>
+
+<div class="receipt-row">
+
+<span>Fare</span>
+
+<strong>
+₹${paidRide.fare}
+</strong>
+
+</div>
+
+<div class="receipt-row">
+
+<span>Payment</span>
+
+<strong>
+${paidRide.paymentMethod}
+</strong>
+
+</div>
+
+`;
+
+document.getElementById(
+"receiptModal"
+).style.display = "flex";
+
+}
+
+}
+
+// CLOSE RECEIPT
+
+function closeReceipt(){
+
+sessionStorage.removeItem(
+"ratingPopupShown"
+);
+
+document.getElementById(
+"receiptModal"
+).style.display = "none";
+
+location.reload();
+
+}
+
+// TRACKING
+
+function initializeTracking(myRides){
+
+const activeRide =
+myRides.find(ride =>
+
+ride.status === "ACCEPTED"
+||
+ride.status === "IN_PROGRESS"
+
+);
+
+if(!activeRide){
+
+document.querySelector(
+".tracking-section"
+).style.display = "none";
+
+return;
+
+}
+
+const trackingMap =
+L.map('trackingMap')
+.setView([12.9716,77.5946],12);
+
+L.tileLayer(
+'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+{
+attribution:'© OpenStreetMap'
+}
+).addTo(trackingMap);
+
+const customerPoint =
+[12.9716,77.5946];
+
+let driverPoint =
+[12.9516,77.5746];
+
+L.marker(customerPoint)
+.addTo(trackingMap);
+
+const driverMarker =
+L.marker(driverPoint)
+.addTo(trackingMap);
+
+const trackingLine =
+L.polyline(
+[driverPoint, customerPoint],
+{
+color:'#2563eb',
+weight:5
+}
+).addTo(trackingMap);
+
+let step = 0;
+
+const interval =
+setInterval(() => {
+
+step++;
+
+driverPoint = [
+
+driverPoint[0] + 0.0015,
+
+driverPoint[1] + 0.0015
+
+];
+
+driverMarker.setLatLng(
+driverPoint
+);
+
+trackingLine.setLatLngs([
+driverPoint,
+customerPoint
+]);
+
+if(step > 12){
+
+clearInterval(interval);
+
+document.getElementById(
+"trackingStatus"
+).innerText =
+"Driver Arrived";
+
+}
+
+},1000);
+
+}
+
+// AUTO REFRESH
+
+setInterval(() => {
+
+loadMyRides();
+
+},5000);
+
+// LOAD
+
+loadMyRides();
+
+// LOAD THEME
+
+if(
+localStorage.getItem("theme")
+=== "dark"
+){
+
+document.body.classList.add(
+"dark-mode"
+);
+
+}
+
+// TOGGLE THEME
+
+function toggleTheme(){
+
+document.body.classList.toggle(
+"dark-mode"
+);
+
+if(
+document.body.classList.contains(
+"dark-mode"
+)
+){
+
+localStorage.setItem(
+"theme",
+"dark"
+);
+
+}
+
+else{
+
+localStorage.setItem(
+"theme",
+"light"
+);
+
+}
+
+}
+
+</script>
+
+</body>
+
+</html>

@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Driver Dashboard | RideX</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+rel="stylesheet">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<link rel="stylesheet"
+href="css/style.css">
+
+</head>
+
+<body>
+
+<nav class="navbar">
+
+<div class="logo">
+RideX Driver
+</div>
+
+<ul class="nav-links">
+
+<li>
+<a href="driver-dashboard.html">
+Dashboard
+</a>
+</li>
+
+<li>
+<a href="driver-trips.html">
+Trips
+</a>
+</li>
+
+<li>
+<a href="driver-earnings.html">
+Earnings
+</a>
+</li>
+
+</ul>
+
+<div class="nav-actions">
+
+<button class="theme-btn"
+onclick="toggleTheme()">
+
+<i class="fa-solid fa-moon"></i>
+
+</button>
+
+<button class="nav-btn"
+onclick="toggleDriverStatus()"
+id="statusBtn">
+
+Go Offline
+
+</button>
+
+<button class="nav-btn"
+onclick="logoutDriver()">
+
+Logout
+
+</button>
+
+</div>
+
+</nav>
+
+<section class="page-header">
+
+<h1>
+Driver Dashboard
+</h1>
+
+<p>
+Manage active rides and earnings.
+</p>
+
+</section>
+
+<section class="stats-grid">
+
+<div class="stats-box">
+
+<h2 id="driverTrips">
+0
+</h2>
+
+<p>
+Completed Trips
+</p>
+
+</div>
+
+<div class="stats-box">
+
+<h2 id="driverRevenue">
+₹0
+</h2>
+
+<p>
+Total Earnings
+</p>
+
+</div>
+
+<div class="stats-box">
+
+<h2 id="driverRating">
+5.0
+</h2>
+
+<p>
+Driver Rating
+</p>
+
+</div>
+
+</section>
+
+<!-- ACTIVE RIDE -->
+
+<section class="active-ride-section"
+id="activeRideSection">
+
+<h2 class="active-ride-title">
+
+Current Active Ride
+
+</h2>
+
+<div id="activeRideContainer">
+
+</div>
+
+</section>
+
+<!-- HISTORY -->
+
+<section class="page-header">
+
+<h1>
+Ride History
+</h1>
+
+<p>
+Completed and cancelled rides.
+</p>
+
+</section>
+
+<section class="rides-grid"
+id="driverRideGrid">
+
+</section>
+
+<script>
+
+let currentDriver = null;
+
+let notifiedRideIds = [];
+
+// PAGE PROTECTION
+
+const token =
+localStorage.getItem(
+"token"
+);
+
+if(!token){
+
+window.location.href =
+"login.html";
+
+}
+
+// LOAD DASHBOARD
+
+async function loadDriverDashboard(){
+
+currentDriver =
+JSON.parse(
+localStorage.getItem(
+"loggedInDriver"
+)
+);
+
+if(!currentDriver){
+
+window.location.href =
+"login.html";
+
+return;
+
+}
+
+const response =
+await fetch(
+
+"http://localhost:8080/rides",
+
+{
+headers:{
+"Authorization":
+"Bearer " +
+localStorage.getItem("token")
+}
+}
+
+);
+
+const rides =
+await response.json();
+
+// DRIVER RIDES
+
+const myRides =
+rides.filter(ride =>
+
+(
+ride.driver
+&&
+ride.driver.id === currentDriver.id
+)
+
+||
+
+(
+ride.status === "REQUESTED"
+&&
+ride.driver == null
+)
+
+);
+
+// NEW RIDE
+
+const newRide =
+myRides.find(ride =>
+
+ride.status === "REQUESTED"
+&&
+ride.driver == null
+&&
+!notifiedRideIds.includes(ride.id)
+
+);
+
+if(newRide){
+
+showRideNotification(newRide);
+
+notifiedRideIds.push(newRide.id);
+
+}
+
+// COMPLETED
+
+const completed =
+myRides.filter(ride =>
+
+ride.driver
+&&
+ride.driver.id === currentDriver.id
+&&
+ride.status === "COMPLETED"
+
+);
+
+document.getElementById(
+"driverTrips"
+).innerText =
+completed.length;
+
+// REVENUE
+
+let revenue = 0;
+
+completed.forEach(ride => {
+
+revenue += ride.fare;
+
+});
+
+document.getElementById(
+"driverRevenue"
+).innerText =
+"₹" + revenue;
+
+// RATING
+
+document.getElementById(
+"driverRating"
+).innerText =
+
+currentDriver.rating
+?? 5.0;
+// ACTIVE RIDE
+
+let activeRide = null;
+
+// PRIORITY 1 → DRIVER ACTIVE RIDES
+
+activeRide = myRides.find(ride =>
+
+ride.driver
+&&
+ride.driver.id === currentDriver.id
+&&
+ride.status === "IN_PROGRESS"
+
+);
+
+// PRIORITY 2 → ACCEPTED RIDES
+
+if(!activeRide){
+
+activeRide = myRides.find(ride =>
+
+ride.driver
+&&
+ride.driver.id === currentDriver.id
+&&
+ride.status === "ACCEPTED"
+
+);
+
+}
+
+// PRIORITY 3 → NEW REQUESTS
+
+if(!activeRide){
+
+activeRide = myRides.find(ride =>
+
+ride.status === "REQUESTED"
+&&
+ride.driver == null
+
+);
+
+}
+
+const activeContainer =
+document.getElementById(
+"activeRideContainer"
+);
+
+if(activeRide){
+
+activeContainer.innerHTML = `
+
+<div class="active-ride-card">
+
+<div class="ride-top">
+
+<h3>
+
+${activeRide.pickupLocation}
+→
+${activeRide.dropLocation}
+
+</h3>
+
+<span class="ride-status">
+
+${activeRide.status}
+
+</span>
+
+</div>
+
+<div class="ride-details">
+
+<p>
+
+<i class="fa-solid fa-user"></i>
+
+Passenger:
+${activeRide.customer.fullName}
+
+</p>
+
+<p>
+
+<i class="fa-solid fa-phone"></i>
+
+${activeRide.customer.phone}
+
+</p>
+
+<p>
+
+<i class="fa-solid fa-indian-rupee-sign"></i>
+
+Fare:
+₹${activeRide.fare}
+
+</p>
+
+</div>
+
+${activeRide.status === "REQUESTED" ? `
+
+<div class="ride-action-buttons">
+
+<button class="accept-btn"
+onclick="acceptRide(${activeRide.id})">
+
+Accept Ride
+
+</button>
+
+<button class="cancel-ride-btn"
+onclick="cancelRide(${activeRide.id})">
+
+Reject Ride
+
+</button>
+
+</div>
+
+` : ""}
+
+${activeRide.status === "ACCEPTED" ? `
+
+<div class="otp-verification-box">
+
+<input type="number"
+id="enteredOtp"
+placeholder="Enter Customer OTP"
+class="otp-input">
+
+<button class="start-ride-btn"
+onclick="verifyOtp(${activeRide.id}, '${activeRide.otp}')">
+
+Verify OTP
+
+</button>
+
+</div>
+
+` : ""}
+
+${activeRide.status === "IN_PROGRESS" ? `
+
+<div class="ride-action-buttons">
+
+<button class="complete-btn"
+onclick="completeRide(${activeRide.id})">
+
+Complete Ride
+
+</button>
+
+<button class="cancel-ride-btn"
+onclick="cancelRide(${activeRide.id})">
+
+Cancel Ride
+
+</button>
+
+</div>
+
+` : ""}
+
+</div>
+
+`;
+
+}
+
+else{
+
+activeContainer.innerHTML = `
+
+<div class="no-active-ride">
+
+<i class="fa-solid fa-car-side"></i>
+
+<h3>
+No Active Ride
+</h3>
+
+<p>
+Waiting for ride requests...
+</p>
+
+</div>
+
+`;
+
+}
+
+// HISTORY
+
+const historyGrid =
+document.getElementById(
+"driverRideGrid"
+);
+
+historyGrid.innerHTML = "";
+
+const historyRides =
+myRides.filter(ride =>
+
+ride.status === "COMPLETED"
+||
+ride.status === "CANCELLED"
+
+);
+
+historyRides.reverse().forEach(ride => {
+
+historyGrid.innerHTML += `
+
+<div class="ride-history-card">
+
+<div class="ride-top">
+
+<h3>
+
+${ride.pickupLocation}
+→
+${ride.dropLocation}
+
+</h3>
+
+<span class="ride-status">
+
+${ride.status}
+
+</span>
+
+</div>
+
+<div class="ride-details">
+
+<p>
+
+<i class="fa-solid fa-user"></i>
+
+${ride.customer.fullName}
+
+</p>
+
+<p>
+
+<i class="fa-solid fa-indian-rupee-sign"></i>
+
+₹${ride.fare}
+
+</p>
+
+<p>
+
+<i class="fa-solid fa-star"></i>
+
+${ride.rating ?? "Pending"}
+
+</p>
+
+</div>
+
+</div>
+
+`;
+
+});
+
+}
+
+// POPUP
+
+function showRideNotification(ride){
+
+const popup =
+document.createElement("div");
+
+popup.className =
+"ride-popup";
+
+popup.innerHTML = `
+
+<div class="ride-popup-content">
+
+<h3>
+🚖 New Ride Request
+</h3>
+
+<p>
+
+${ride.pickupLocation}
+→
+${ride.dropLocation}
+
+</p>
+
+<p>
+
+Fare:
+₹${ride.fare}
+
+</p>
+
+</div>
+
+`;
+
+document.body.appendChild(popup);
+
+setTimeout(() => {
+
+popup.remove();
+
+},5000);
+
+}
+
+// ACCEPT
+
+async function acceptRide(rideId){
+
+const response =
+await fetch(
+
+`http://localhost:8080/rides/${rideId}/accept?driverId=${currentDriver.id}`,
+
+{
+method:"PUT",
+
+headers:{
+"Authorization":
+"Bearer " +
+localStorage.getItem("token")
+}
+
+}
+
+);
+
+alert("Ride Accepted");
+
+loadDriverDashboard();
+
+}
+
+function verifyOtp(rideId, realOtp){
+
+const enteredOtp =
+document.getElementById(
+"enteredOtp"
+).value;
+
+// DEBUG
+
+console.log(
+"Entered OTP:",
+enteredOtp
+);
+
+console.log(
+"Real OTP:",
+realOtp
+);
+
+// VERIFY
+
+if(
+parseInt(enteredOtp)
+=== parseInt(realOtp)
+){
+
+startRide(rideId);
+
+}
+
+else{
+
+alert(
+"Invalid OTP"
+);
+
+}
+
+}
+
+// START
+
+async function startRide(rideId){
+
+await fetch(
+
+`http://localhost:8080/rides/${rideId}/status?status=IN_PROGRESS`,
+
+{
+method:"PUT",
+
+headers:{
+"Authorization":
+"Bearer " +
+localStorage.getItem("token")
+}
+
+}
+
+);
+
+loadDriverDashboard();
+
+}
+
+// COMPLETE
+
+async function completeRide(rideId){
+
+await fetch(
+
+`http://localhost:8080/rides/${rideId}/status?status=COMPLETED`,
+
+{
+method:"PUT",
+
+headers:{
+"Authorization":
+"Bearer " +
+localStorage.getItem("token")
+}
+
+}
+
+);
+
+loadDriverDashboard();
+
+}
+
+// CANCEL
+
+async function cancelRide(rideId){
+
+await fetch(
+
+`http://localhost:8080/rides/${rideId}/cancel`,
+
+{
+method:"PUT",
+
+headers:{
+"Authorization":
+"Bearer " +
+localStorage.getItem("token")
+}
+
+}
+
+);
+
+loadDriverDashboard();
+
+}
+
+// DRIVER STATUS
+
+async function toggleDriverStatus(){
+
+if(currentDriver.status === "AVAILABLE"){
+
+currentDriver.status = "OFFLINE";
+
+document.getElementById(
+"statusBtn"
+).innerText =
+"Go Online";
+
+}
+
+else{
+
+currentDriver.status = "AVAILABLE";
+
+document.getElementById(
+"statusBtn"
+).innerText =
+"Go Offline";
+
+}
+
+await fetch(
+
+`http://localhost:8080/drivers/${currentDriver.id}`,
+
+{
+method:"PUT",
+
+headers:{
+"Content-Type":"application/json",
+
+"Authorization":
+"Bearer " +
+localStorage.getItem("token")
+},
+
+body:JSON.stringify(currentDriver)
+}
+
+);
+
+localStorage.setItem(
+"loggedInDriver",
+JSON.stringify(currentDriver)
+);
+
+}
+
+// LOGOUT
+
+function logoutDriver(){
+
+localStorage.removeItem(
+"loggedInDriver"
+);
+
+localStorage.removeItem(
+"token"
+);
+
+window.location.href =
+"login.html";
+
+}
+
+// INITIAL LOAD
+
+loadDriverDashboard();
+
+// AUTO REFRESH
+
+setInterval(() => {
+
+const otpInput =
+document.getElementById("enteredOtp");
+
+if(
+!otpInput
+||
+document.activeElement !== otpInput
+){
+
+loadDriverDashboard();
+
+}
+
+},3000);
+
+// LOAD THEME
+
+if(
+localStorage.getItem("theme")
+=== "dark"
+){
+
+document.body.classList.add(
+"dark-mode"
+);
+
+}
+
+// TOGGLE THEME
+
+function toggleTheme(){
+
+document.body.classList.toggle(
+"dark-mode"
+);
+
+if(
+document.body.classList.contains(
+"dark-mode"
+)
+){
+
+localStorage.setItem(
+"theme",
+"dark"
+);
+
+}
+
+else{
+
+localStorage.setItem(
+"theme",
+"light"
+);
+
+}
+
+}
+
+</script>
+
+</body>
+
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Driver Login | RideX</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+rel="stylesheet">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<link rel="stylesheet"
+href="css/style.css">
+
+</head>
+
+<body>
+
+<section class="login-page">
+
+<div class="login-left">
+
+<div class="login-content">
+
+<h1>
+Driver Portal
+</h1>
+
+<p>
+Manage rides, earnings and ride requests.
+</p>
+
+<img src="images/car.png">
+
+</div>
+
+</div>
+
+<div class="login-right">
+
+<div class="login-card">
+
+<div class="login-top">
+
+<h2>
+Driver Login
+</h2>
+
+<p>
+Login to continue driving with RideX
+</p>
+
+</div>
+
+<div class="login-form">
+
+<div class="input-box">
+
+<i class="fa-solid fa-envelope"></i>
+
+<input type="email"
+id="email"
+placeholder="Driver Email">
+
+</div>
+
+<div class="input-box">
+
+<i class="fa-solid fa-lock"></i>
+
+<input type="password"
+id="password"
+placeholder="Password">
+
+</div>
+
+<button onclick="loginDriver()">
+
+Login
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<script>
+
+async function loginDriver(){
+
+    const email =
+        document.getElementById(
+            "email"
+        ).value;
+
+    const password =
+        document.getElementById(
+            "password"
+        ).value;
+
+    try{
+
+        const response =
+            await fetch(
+
+                "http://localhost:8080/auth/driver/login",
+
+                {
+
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":"application/json"
+                    },
+
+                    body:JSON.stringify({
+
+                        email,
+                        password
+
+                    })
+
+                }
+
+            );
+
+        // INVALID LOGIN
+
+        if(!response.ok){
+
+            alert(
+                "Invalid Driver Credentials"
+            );
+
+            return;
+
+        }
+
+        // RESPONSE
+
+        const data =
+            await response.json();
+
+        // SAVE JWT
+
+        localStorage.setItem(
+
+            "token",
+
+            data.token
+
+        );
+
+        // SAVE DRIVER
+
+       localStorage.setItem(
+
+"loggedInDriver",
+
+JSON.stringify({
+
+    id:data.userId,
+
+    fullName:data.fullName,
+
+    role:data.role
+
+})
+
+);
+
+        // REDIRECT
+
+        window.location.href =
+            "driver-dashboard.html";
+
+    }
+
+    catch(error){
+
+        console.log(error);
+
+        alert(
+            "Server Error"
+        );
+
+    }
+
+}
+
+// LOAD THEME
+
+if(
+localStorage.getItem("theme")
+=== "dark"
+){
+
+document.body.classList.add(
+"dark-mode"
+);
+
+}
+
+// TOGGLE THEME
+
+function toggleTheme(){
+
+document.body.classList.toggle(
+"dark-mode"
+);
+
+if(
+document.body.classList.contains(
+"dark-mode"
+)
+){
+
+localStorage.setItem(
+"theme",
+"dark"
+);
+
+}
+
+else{
+
+localStorage.setItem(
+"theme",
+"light"
+);
+
+}
+
+}
+
+</script>
+
+</body>
+
+</html>

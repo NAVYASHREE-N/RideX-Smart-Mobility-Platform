@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Book Ride | RideX</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+rel="stylesheet">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<link rel="stylesheet"
+href="css/style.css">
+
+</head>
+
+<body>
+
+<nav class="navbar">
+
+<div class="logo">
+RideX
+</div>
+
+<ul class="nav-links">
+
+<li>
+<a href="dashboard.html">
+Home
+</a>
+</li>
+
+<li>
+<a href="rides.html">
+Book Ride
+</a>
+</li>
+
+<li>
+<a href="myrides.html">
+My Rides
+</a>
+</li>
+
+</ul>
+
+<div class="nav-actions">
+
+<button class="theme-btn"
+onclick="toggleTheme()">
+
+<i class="fa-solid fa-moon"></i>
+
+</button>
+
+<button class="nav-btn"
+onclick="window.location.href='myrides.html'">
+
+My Trips
+
+</button>
+
+<button class="nav-btn"
+onclick="logoutUser()">
+
+Logout
+
+</button>
+
+</div>
+
+</nav>
+
+<section class="booking-page">
+
+<div class="booking-panel">
+
+<h1>
+Book Your Ride
+</h1>
+
+<p>
+Smart Bangalore mobility experience.
+</p>
+
+<div class="ride-search-box">
+
+<i class="fa-solid fa-location-dot"></i>
+
+<input type="text"
+id="pickup"
+placeholder="Pickup Location"
+list="bangalorePlaces">
+
+</div>
+
+<div class="ride-search-box">
+
+<i class="fa-solid fa-location-crosshairs"></i>
+
+<input type="text"
+id="drop"
+placeholder="Destination"
+list="bangalorePlaces">
+
+</div>
+
+<datalist id="bangalorePlaces">
+
+<option value="BTM Layout">
+<option value="Koramangala">
+<option value="HSR Layout">
+<option value="Whitefield">
+<option value="Marathahalli">
+<option value="Bellandur">
+<option value="Electronic City">
+<option value="Indiranagar">
+<option value="MG Road">
+<option value="Majestic">
+<option value="Yelahanka">
+<option value="Hebbal">
+<option value="Jayanagar">
+<option value="Banashankari">
+<option value="JP Nagar">
+<option value="RR Nagar">
+<option value="Silk Board">
+<option value="Airport">
+<option value="Malleshwaram">
+<option value="Rajajinagar">
+<option value="Kengeri">
+<option value="KR Puram">
+<option value="Ulsoor">
+<option value="Basavanagudi">
+
+</datalist>
+
+<button class="show-route-btn"
+onclick="showRoute()">
+
+Show Route
+
+</button>
+
+<div id="map"></div>
+
+<div class="ride-options-grid">
+
+<div class="ride-option active-option"
+onclick="selectRide(this,'Cab',25)">
+
+<img src="images/car.png">
+
+<div>
+
+<h3>
+Cab Ride
+</h3>
+
+<p>
+Premium city cab
+</p>
+
+</div>
+
+<span>
+₹25/km
+</span>
+
+</div>
+
+<div class="ride-option"
+onclick="selectRide(this,'Auto',15)">
+
+<img src="images/auto.jpg">
+
+<div>
+
+<h3>
+Auto Ride
+</h3>
+
+<p>
+Fast city auto
+</p>
+
+</div>
+
+<span>
+₹15/km
+</span>
+
+</div>
+
+<div class="ride-option"
+onclick="selectRide(this,'Bike',10)">
+
+<img src="images/bike.jpg">
+
+<div>
+
+<h3>
+Bike Taxi
+</h3>
+
+<p>
+Quickest mobility
+</p>
+
+</div>
+
+<span>
+₹10/km
+</span>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="summary-panel">
+
+<h2>
+Ride Summary
+</h2>
+
+<div class="summary-card">
+
+<div class="summary-row">
+
+<span>
+Ride Type
+</span>
+
+<strong id="rideType">
+Cab
+</strong>
+
+</div>
+
+<div class="summary-row">
+
+<span>
+Estimated Arrival
+</span>
+
+<strong id="rideTime">
+--
+</strong>
+
+</div>
+
+<div class="summary-row">
+
+<span>
+Estimated Fare
+</span>
+
+<strong id="rideFare">
+--
+</strong>
+
+</div>
+
+<div class="summary-row">
+
+<span>
+Distance
+</span>
+
+<strong id="rideDistance">
+--
+</strong>
+
+</div>
+
+<button class="confirm-ride-btn"
+onclick="bookRide()">
+
+Confirm Booking
+
+</button>
+
+</div>
+
+</div>
+
+</section>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+
+let selectedRide = "Cab";
+let pricePerKm = 25;
+let selectedDistance = 0;
+
+// PAGE PROTECTION
+
+const user =
+JSON.parse(
+localStorage.getItem(
+"loggedInUser"
+)
+);
+
+const token =
+localStorage.getItem(
+"token"
+);
+
+if(
+!user
+||
+!token
+){
+
+window.location.href =
+"login.html";
+
+}
+
+const locations = {
+
+"BTM Layout":[12.9166,77.6101],
+"Koramangala":[12.9352,77.6245],
+"HSR Layout":[12.9116,77.6474],
+"Whitefield":[12.9698,77.7500],
+"Marathahalli":[12.9591,77.6974],
+"Bellandur":[12.9250,77.6762],
+"Electronic City":[12.8399,77.6770],
+"Indiranagar":[12.9784,77.6408],
+"MG Road":[12.9755,77.6066],
+"Majestic":[12.9767,77.5713],
+"Yelahanka":[13.1007,77.5963],
+"Hebbal":[13.0358,77.5970],
+"Jayanagar":[12.9250,77.5938],
+"Banashankari":[12.9081,77.5550],
+"JP Nagar":[12.9077,77.5850],
+"RR Nagar":[12.9275,77.5210],
+"Silk Board":[12.9177,77.6229],
+"Airport":[13.1986,77.7066],
+"Malleshwaram":[13.0031,77.5705],
+"Rajajinagar":[12.9910,77.5550],
+"Kengeri":[12.9141,77.4850],
+"KR Puram":[13.0080,77.6950],
+"Ulsoor":[12.9845,77.6200],
+"Basavanagudi":[12.9416,77.5738]
+
+};
+
+const map = L.map('map')
+.setView([12.9716,77.5946],11);
+
+L.tileLayer(
+'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+{
+attribution:'© OpenStreetMap'
+}
+).addTo(map);
+
+let marker1;
+let marker2;
+let line;
+
+function showRoute(){
+
+const pickup =
+document.getElementById("pickup").value;
+
+const drop =
+document.getElementById("drop").value;
+
+if(!locations[pickup] || !locations[drop]){
+
+alert(
+"Select valid Bangalore locations"
+);
+
+return;
+
+}
+
+if(marker1) map.removeLayer(marker1);
+if(marker2) map.removeLayer(marker2);
+if(line) map.removeLayer(line);
+
+const point1 = locations[pickup];
+const point2 = locations[drop];
+
+marker1 = L.marker(point1)
+.addTo(map)
+.bindPopup(pickup);
+
+marker2 = L.marker(point2)
+.addTo(map)
+.bindPopup(drop);
+
+line = L.polyline(
+[point1, point2],
+{
+color:'#2563eb',
+weight:5
+}
+).addTo(map);
+
+map.fitBounds(line.getBounds());
+
+const latDiff =
+point1[0] - point2[0];
+
+const lonDiff =
+point1[1] - point2[1];
+
+selectedDistance =
+Math.sqrt(
+latDiff * latDiff +
+lonDiff * lonDiff
+) * 111;
+
+selectedDistance =
+Math.round(selectedDistance);
+
+const eta =
+selectedDistance * 3;
+
+const fare =
+selectedDistance * pricePerKm;
+
+document.getElementById("rideDistance")
+.innerText =
+selectedDistance + " KM";
+
+document.getElementById("rideTime")
+.innerText =
+eta + " mins";
+
+document.getElementById("rideFare")
+.innerText =
+"₹" + fare;
+
+}
+
+function selectRide(card,type,price){
+
+document.querySelectorAll(".ride-option")
+.forEach(option =>
+
+option.classList.remove("active-option")
+
+);
+
+card.classList.add("active-option");
+
+selectedRide = type;
+
+pricePerKm = price;
+
+document.getElementById("rideType")
+.innerText = type;
+
+if(selectedDistance > 0){
+
+const fare =
+selectedDistance * pricePerKm;
+
+document.getElementById("rideFare")
+.innerText =
+"₹" + fare;
+
+}
+
+}
+
+async function bookRide(){
+
+const pickup =
+document.getElementById("pickup").value;
+
+const drop =
+document.getElementById("drop").value;
+
+if(selectedDistance === 0){
+
+alert(
+"Please show route first"
+);
+
+return;
+
+}
+
+const response =
+await fetch(
+
+`http://localhost:8080/rides/book?customerId=${user.id}&pickup=${pickup}&drop=${drop}&distanceKm=${selectedDistance}`,
+
+{
+method:"POST",
+
+headers:{
+
+"Authorization":
+"Bearer " +
+localStorage.getItem("token")
+
+}
+
+}
+
+);
+
+// HANDLE ERRORS
+
+if(!response.ok){
+
+    const errorText =
+    await response.text();
+
+    alert(
+        "Booking Failed: " + errorText
+    );
+
+    return;
+
+}
+
+// SUCCESS
+
+const ride =
+await response.json();
+
+const modal =
+document.createElement("div");
+
+modal.classList.add(
+"booking-modal-overlay"
+);
+
+modal.innerHTML = `
+
+<div class="booking-success-modal">
+
+<div class="success-icon">
+
+<i class="fa-solid fa-circle-check"></i>
+
+</div>
+
+<h2>
+Ride Requested Successfully
+</h2>
+
+<p class="success-subtitle">
+
+Searching for nearby drivers...
+
+</p>
+
+<div class="booking-info">
+
+<div class="booking-info-row">
+
+<span>Status</span>
+
+<strong>
+${ride.status}
+</strong>
+
+</div>
+
+<div class="booking-info-row">
+
+<span>Fare</span>
+
+<strong>
+₹${ride.fare}
+</strong>
+
+</div>
+
+<div class="booking-info-row">
+
+<span>OTP</span>
+
+<strong>
+${ride.otp}
+</strong>
+
+</div>
+
+<div class="booking-info-row">
+
+<span>ETA</span>
+
+<strong>
+${selectedDistance * 3} mins
+</strong>
+
+</div>
+
+</div>
+
+<button class="track-ride-btn"
+onclick="window.location.href='myrides.html'">
+
+Track Ride
+
+</button>
+
+</div>
+
+`;
+
+document.body.appendChild(modal);
+
+}
+
+
+
+// LOAD THEME
+
+if(
+localStorage.getItem("theme")
+=== "dark"
+){
+
+document.body.classList.add(
+"dark-mode"
+);
+
+}
+
+// TOGGLE
+
+function toggleTheme(){
+
+document.body.classList.toggle(
+"dark-mode"
+);
+
+if(
+document.body.classList.contains(
+"dark-mode"
+)
+){
+
+localStorage.setItem(
+"theme",
+"dark"
+);
+
+}
+
+else{
+
+localStorage.setItem(
+"theme",
+"light"
+);
+
+}
+
+}
+
+function logoutUser(){
+
+localStorage.removeItem(
+"loggedInUser"
+);
+
+localStorage.removeItem(
+"token"
+);
+
+window.location.href =
+"login.html";
+
+}
+
+</script>
+
+</body>
+
+</html>

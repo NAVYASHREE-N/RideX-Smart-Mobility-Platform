@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>RideX Drivers</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+rel="stylesheet">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<link rel="stylesheet"
+href="css/style.css">
+
+</head>
+
+<body>
+
+<nav class="navbar">
+
+<div class="logo">
+RideX Admin
+</div>
+
+<ul class="nav-links">
+
+<li>
+<a href="admin-dashboard.html">
+Dashboard
+</a>
+</li>
+
+<li>
+<a href="admin-customers.html">
+Customers
+</a>
+</li>
+
+<li>
+<a href="admin-drivers.html">
+Drivers
+</a>
+</li>
+
+<li>
+<a href="admin-analytics.html">
+Analytics
+</a>
+</li>
+
+</ul>
+
+<div class="nav-actions">
+
+<button class="theme-btn"
+onclick="toggleTheme()">
+
+<i class="fa-solid fa-moon"></i>
+
+</button>
+
+<button class="nav-btn"
+onclick="openDriverModal()">
+
+Add Driver
+
+</button>
+
+<button class="nav-btn"
+onclick="logoutAdmin()">
+
+Logout
+
+</button>
+
+</div>
+
+</nav>
+
+<section class="page-header">
+
+<h1>
+Driver Management
+</h1>
+
+<p>
+Manage RideX driver operations and credentials.
+</p>
+
+</section>
+
+<section class="driver-grid"
+id="driverGrid">
+
+</section>
+
+<!-- MODAL -->
+
+<div class="modal-overlay"
+id="driverModal">
+
+<div class="customer-modal">
+
+<div class="modal-top">
+
+<h2>
+Add Driver
+</h2>
+
+<i class="fa-solid fa-xmark"
+onclick="closeDriverModal()"></i>
+
+</div>
+
+<div class="modal-form">
+
+<input type="text"
+id="fullName"
+placeholder="Driver Name">
+
+<input type="email"
+id="email"
+placeholder="Driver Email">
+
+<input type="text"
+id="phone"
+placeholder="Phone Number">
+
+<input type="password"
+id="password"
+placeholder="Driver Password">
+
+<input type="text"
+id="licenseNumber"
+placeholder="License Number">
+
+<input type="text"
+id="vehicleModel"
+placeholder="Vehicle Model">
+
+<input type="text"
+id="vehicleNumber"
+placeholder="Vehicle Number">
+
+<button onclick="addDriver()">
+
+Create Driver Account
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+// TOKEN VALIDATION
+
+const token =
+localStorage.getItem(
+"token"
+);
+
+if(!token){
+
+window.location.href =
+"login.html";
+
+}
+
+// LOAD DRIVERS
+
+async function loadDrivers(){
+
+const user =
+JSON.parse(
+localStorage.getItem(
+"loggedInUser"
+)
+);
+
+// ADMIN PROTECTION
+
+if(
+!user
+||
+user.role !== "ADMIN"
+){
+
+window.location.href =
+"login.html";
+
+return;
+
+}
+
+const response =
+await fetch(
+
+"http://localhost:8080/drivers",
+
+{
+headers:{
+"Authorization":
+"Bearer " +
+localStorage.getItem("token")
+}
+}
+
+);
+
+const drivers =
+await response.json();
+
+const grid =
+document.getElementById(
+"driverGrid"
+);
+
+grid.innerHTML = "";
+
+drivers.forEach(driver => {
+
+grid.innerHTML += `
+
+<div class="driver-card">
+
+<div class="driver-top">
+
+<div class="driver-icon">
+
+<i class="fa-solid fa-id-card"></i>
+
+</div>
+
+<div class="driver-status">
+
+${driver.status}
+
+</div>
+
+</div>
+
+<h3>
+${driver.fullName}
+</h3>
+
+<p>
+${driver.email}
+</p>
+
+<div class="driver-details">
+
+<span>
+
+<i class="fa-solid fa-phone"></i>
+
+${driver.phone}
+
+</span>
+
+<span>
+
+<i class="fa-solid fa-car"></i>
+
+${driver.vehicleModel}
+
+</span>
+
+<span>
+
+<i class="fa-solid fa-hashtag"></i>
+
+${driver.vehicleNumber}
+
+</span>
+
+<span>
+
+<i class="fa-solid fa-star"></i>
+
+${driver.rating} Rating
+
+</span>
+
+</div>
+
+<div class="driver-credentials">
+
+<p>
+
+<strong>Email:</strong>
+${driver.email}
+
+</p>
+
+<p>
+
+<strong>Password:</strong>
+${driver.password}
+
+</p>
+
+</div>
+
+</div>
+
+`;
+
+});
+
+}
+
+// OPEN MODAL
+
+function openDriverModal(){
+
+document.getElementById(
+"driverModal"
+).style.display = "flex";
+
+}
+
+// CLOSE MODAL
+
+function closeDriverModal(){
+
+document.getElementById(
+"driverModal"
+).style.display = "none";
+
+}
+
+// ADD DRIVER
+
+async function addDriver(){
+
+const driver = {
+
+fullName:
+document.getElementById(
+"fullName"
+).value,
+
+email:
+document.getElementById(
+"email"
+).value,
+
+phone:
+document.getElementById(
+"phone"
+).value,
+
+password:
+document.getElementById(
+"password"
+).value,
+
+licenseNumber:
+document.getElementById(
+"licenseNumber"
+).value,
+
+vehicleModel:
+document.getElementById(
+"vehicleModel"
+).value,
+
+vehicleNumber:
+document.getElementById(
+"vehicleNumber"
+).value
+
+};
+
+const response =
+await fetch(
+
+"http://localhost:8080/drivers",
+
+{
+
+method:"POST",
+
+headers:{
+
+"Content-Type":"application/json",
+
+"Authorization":
+"Bearer " +
+localStorage.getItem("token")
+
+},
+
+body:JSON.stringify(driver)
+
+}
+
+);
+
+if(response.ok){
+
+alert(
+"Driver account created successfully!"
+);
+
+closeDriverModal();
+
+loadDrivers();
+
+}
+
+else{
+
+alert(
+"Unable to create driver account"
+);
+
+}
+
+}
+
+// LOGOUT
+
+function logoutAdmin(){
+
+localStorage.removeItem(
+"loggedInUser"
+);
+
+localStorage.removeItem(
+"token"
+);
+
+window.location.href =
+"login.html";
+
+}
+
+// LOAD
+
+loadDrivers();
+
+// LOAD THEME
+
+if(
+localStorage.getItem("theme")
+=== "dark"
+){
+
+document.body.classList.add(
+"dark-mode"
+);
+
+}
+
+// TOGGLE THEME
+
+function toggleTheme(){
+
+document.body.classList.toggle(
+"dark-mode"
+);
+
+if(
+document.body.classList.contains(
+"dark-mode"
+)
+){
+
+localStorage.setItem(
+"theme",
+"dark"
+);
+
+}
+
+else{
+
+localStorage.setItem(
+"theme",
+"light"
+);
+
+}
+
+}
+
+</script>
+
+</body>
+
+</html>
