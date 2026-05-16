@@ -192,7 +192,7 @@ Run using Live Server or browser.
 
 # 👩‍💻 Developed By
 
-Navya Shree N
+Navyashree N
 
 ---
 
